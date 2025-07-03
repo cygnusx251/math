@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 2rem;
+    }
+    form {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    label, select, input {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    input[type="submit"], button {
+      background-color: #1a237e;
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .qr-code {
+      display: none;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .qr-code img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <form id="registrationForm" enctype="multipart/form-data">
+    <h2>Student Registration</h2>
+
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required />
+
+    <label for="status">Current Status:</label>
+    <select id="status" name="status" required>
+      <option value="a">In bachelor's degree</option>
+      <option value="b">Completed bachelor's, not started master's</option>
+      <option value="c">In master's degree</option>
+      <option value="d">Completed master's, not started PhD</option>
+    </select>
+
+    <button type="button" onclick="redirectToPayment()">Pay Now</button>
+
+    <div class="qr-code" id="qrCode">
+      <p>Scan the QR code below to pay:</p>
+      <img id="qrImage" src="" alt="UPI QR Code" />
+    </div>
+
+    <label for="screenshot">Upload Payment Screenshot (jpg, jpeg, png):</label>
+    <input type="file" id="screenshot" name="screenshot" accept=".jpg,.jpeg,.png" required />
+
+    <input type="submit" value="Submit" />
+  </form>
+
+  <script>
+    function redirectToPayment() {
+      const status = document.getElementById('status').value;
+      const qrCodeDiv = document.getElementById('qrCode');
+      const qrImage = document.getElementById('qrImage');
+      let amount = 0;
+
+      if (status === 'a' || status === 'b') {
+        amount = 1000;
+      } else if (status === 'c' || status === 'd') {
+        amount = 1200;
+      }
+
+      const upiLink = `upi://pay?pa=saptarshirkmv@okaxis&pn=Saptarshi+Dandapat&am=${amount}&cu=INR`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(upiLink)}&size=300x300`;
+
+      qrImage.src = qrUrl;
+      qrCodeDiv.style.display = 'block';
+      window.open(upiLink, '_blank');
+    }
+
+    document.getElementById('registrationForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+
+      const response = await fetch('https://script.google.com/macros/s/AKfycbzfSbHBXd2saPqgLBy0wq07BvjwylDw5dOfX7U1c7REukb3sZyRLobGZ3lnmPQJULduPw/exec', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        alert("Submitted successfully!");
+        this.reset();
+        document.getElementById('qrCode').style.display = 'none';
+      } else {
+        alert("Submission failed. Please try again.");
+      }
+    });
+  </script>
+</body>
+</html>
