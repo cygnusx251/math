@@ -79,39 +79,42 @@
         const qrCodeDiv = document.getElementById('qrCode');
         const qrImage = document.getElementById('qrImage');
         let amount = 0;
-  
+
         if (status === 'a' || status === 'b') {
           amount = 1000;
         } else if (status === 'c' || status === 'd') {
           amount = 1200;
         }
-  
+
         const upiLink = `upi://pay?pa=saptarshirkmv@okaxis&pn=Saptarshi+Dandapat&am=${amount}&cu=INR`;
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(upiLink)}&size=300x300`;
-  
+
         qrImage.src = qrUrl;
         qrCodeDiv.style.display = 'block';
         window.open(upiLink, '_blank');
       }
 
+      // 👇 Make redirectToPayment accessible to the global scope
+      window.redirectToPayment = redirectToPayment;
+
       document.getElementById('registrationForm').addEventListener('submit', function (e) {
         e.preventDefault();
-        alert("Form submit triggered");
+
         const name = document.getElementById("name").value;
         const status = document.getElementById("status").value;
         const fileInput = document.getElementById("screenshot");
         const file = fileInput.files[0];
-  
+
         if (!file) {
           alert("Please upload a payment screenshot.");
           return;
         }
-  
+
         const reader = new FileReader();
 
         reader.onloadend = async function () {
           const base64Data = reader.result.split(',')[1];
-  
+
           const payload = {
             name: name,
             status: status,
@@ -119,26 +122,34 @@
             mimeType: file.type,
             base64: base64Data
           };
-  
-          const response = await fetch("https://script.google.com/macros/s/AKfycbw-3H-HJ9QdQbThuRMjSxxsopGfJf3-hIne4S0schhcRwKWljd0Iv5WxRGMbxXnzWTD1A/exec", {
-            method: "POST",
-            body: JSON.stringify(payload),
-            headers: {
-              "Content-Type": "application/json"
+
+          try {
+            const response = await fetch("https://script.google.com/macros/s/AKfycbw-3H-HJ9QdQbThuRMjSxxsopGfJf3-hIne4S0schhcRwKWljd0Iv5WxRGMbxXnzWTD1A/exec", {
+              method: "POST",
+              body: JSON.stringify(payload),
+              headers: {
+                "Content-Type": "application/json"
+              }
+            });
+
+            const result = await response.json();
+            console.log("Server response:", result);
+
+            if (response.ok && result.result === "success") {
+              alert("Submitted successfully!");
+              document.getElementById('registrationForm').reset();
+              document.getElementById('qrCode').style.display = 'none';
+            } else {
+              alert("Submission failed: " + (result.message || "Unknown error"));
             }
-          });
-  
-          if (response.ok) {
-            alert("Submitted successfully!");
-            document.getElementById('registrationForm').reset();
-            document.getElementById('qrCode').style.display = 'none';
-          } else {
-            alert("Submission failed.");
+          } catch (err) {
+            alert("Error during submission: " + err.message);
+            console.error("Fetch error:", err);
           }
         };
-  
+
         reader.readAsDataURL(file);
-        });
+      });
     });
   </script>
 </body>
